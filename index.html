@@ -282,29 +282,38 @@
           <h2>Phone Numbers &amp; Prompt</h2>
         </div>
         <form id="callerForm" novalidate>
-          <div class="form-group">
-            <label for="numbers">Phone Numbers</label>
-            <textarea
-              id="numbers"
-              name="numbers"
-              placeholder="+1234567890, +0987654321, +1122334455"
-              required
-            ></textarea>
-            <div class="input-hint">Enter multiple numbers separated by commas</div>
-          </div>
-          <div class="form-group">
-            <label for="prompt">Call Prompt (optional)</label>
-            <textarea
-              id="prompt"
-              name="prompt"
-              placeholder="e.g. You are calling to conduct a customer satisfaction survey..."
-            ></textarea>
-            <div class="input-hint">Custom AI conversation prompt</div>
-          </div>
-          <button type="submit" class="btn" id="submitBtn">
-            <i class="fas fa-phone"></i> Start Outbound Calls
-          </button>
-        </form>
+  <div class="form-group">
+    <label for="numbers">Phone Numbers</label>
+    <textarea
+      id="numbers"
+      name="numbers"
+      placeholder="+1234567890, +0987654321, +1122334455"
+    ></textarea>
+    <div class="input-hint">Enter multiple numbers separated by commas</div>
+  </div>
+
+  <div class="form-group">
+    <label for="prompt">Call Prompt (optional)</label>
+    <textarea
+      id="prompt"
+      name="prompt"
+      placeholder="e.g. You are calling to conduct a customer satisfaction survey..."
+    ></textarea>
+    <div class="input-hint">Custom AI conversation prompt</div>
+  </div>
+
+  <!-- 🔽 Add this file upload block -->
+  <div class="form-group">
+    <label for="file">Or Upload File</label>
+    <input type="file" id="file" name="file" accept=".txt,.csv,.docx,.pdf,.xlsx" />
+    <div class="input-hint">Upload a file with phone numbers (optional)</div>
+  </div>
+
+  <button type="submit" class="btn" id="submitBtn">
+    <i class="fas fa-phone"></i> Start Outbound Calls
+  </button>
+</form>
+
       </div>
 
       <!-- System Status -->
@@ -452,25 +461,30 @@
   loading.style.display = 'block';
 
   try {
-    const url = `${API_BASE_URL}/outbound_caller?numbers_list_str=${encodeURIComponent(numsRaw)}&prompt=${encodeURIComponent(prompt)}`;
-    
-    const res = await fetch(url, {
-      method: 'POST',
-      headers: {
-        'Accept': 'application/json'
-      }
-    });
+  const formData = new FormData();
+  formData.append('numbers_list_str', numsRaw);
+  formData.append('prompt', prompt);
 
-    if (!res.ok) {
-      const text = await res.text();
-      throw new Error(`HTTP ${res.status}: ${text}`);
-    }
+  const fileInput = document.getElementById('file');
+  if (fileInput && fileInput.files.length > 0) {
+    formData.append('file', fileInput.files[0]);
+  }
 
-    const data = await res.json();
-    showToast(`Successfully initiated calls to ${data.length} numbers!`);
-    displayResults(data);
+  const res = await fetch(`${API_BASE_URL}/outbound_caller`, {
+    method: 'POST',
+    body: formData
+  });
 
-  } catch (err) {
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`HTTP ${res.status}: ${text}`);
+  }
+
+  const data = await res.json();
+  showToast(`✅ Successfully initiated calls to ${data.length} numbers!`);
+  displayResults(data);
+}
+ catch (err) {
     console.error(err);
     let msg = 'Failed to initiate calls.';
     if (err.message.includes('405')) {
