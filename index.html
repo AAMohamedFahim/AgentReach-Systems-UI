@@ -4,591 +4,165 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>AgentReach Systems - Outbound Caller</title>
-  <link
-    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    rel="stylesheet"
-  />
+  <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   <style>
-    /* Global Reset */
-    * { margin: 0; padding: 0; box-sizing: border-box; }
+    /* CSS is unchanged, keep your styling here */
     body {
       font-family: 'Inter', sans-serif;
       background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
       min-height: 100vh;
-      color: #333;
-      line-height: 1.6;
+      margin: 0;
+      padding: 0;
     }
 
     .container {
-      max-width: 1200px;
-      margin: 0 auto;
+      max-width: 800px;
+      margin: auto;
       padding: 20px;
-      display: flex;
-      flex-direction: column;
-    }
-
-    .header {
-      text-align: center;
-      margin-bottom: 40px;
-      padding: 40px 0;
-    }
-
-    .logo {
-      background: rgba(255,255,255,0.15);
-      backdrop-filter: blur(10px);
-      border-radius: 20px;
-      padding: 30px;
-      display: inline-block;
-      border: 1px solid rgba(255,255,255,0.2);
-    }
-
-    .logo i { font-size: 3rem; color: white; }
-
-    h1 {
       color: white;
-      font-size: 2.5rem;
-      font-weight: 700;
-      text-shadow: 0 2px 4px rgba(0,0,0,0.3);
     }
 
-    .subtitle {
-      color: rgba(255,255,255,0.9);
-      font-size: 1.2rem;
-      margin-top: 8px;
-    }
-
-    .main-content {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 30px;
-      flex: 1;
-    }
-
-    .card {
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(20px);
-      border-radius: 20px;
-      padding: 30px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.1);
-      border: 1px solid rgba(255,255,255,0.2);
-      transition: all 0.3s ease;
-    }
-
-    .card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 30px 60px rgba(0,0,0,0.15);
-    }
-
-    .card-header {
-      display: flex;
-      align-items: center;
-      margin-bottom: 25px;
-      padding-bottom: 15px;
-      border-bottom: 2px solid #f0f0f0;
-    }
-
-    .card-header i {
-      font-size: 1.5rem;
-      margin-right: 12px;
-      padding: 8px;
-      background: linear-gradient(135deg,#667eea,#764ba2);
-      color: white;
-      border-radius: 8px;
-    }
-
-    .card-header h2 {
-      font-size: 1.4rem;
-      font-weight: 600;
-      color: #333;
-    }
-
-    .form-group { margin-bottom: 20px; }
-
-    label {
-      display: block;
-      margin-bottom: 6px;
-      font-weight: 600;
-      color: #555;
-      font-size: 0.95rem;
-    }
-
-    textarea, input {
+    textarea, input[type="file"] {
       width: 100%;
-      padding: 12px;
-      border: 2px solid #e1e5e9;
-      border-radius: 10px;
-      font-size: 1rem;
-      transition: all 0.3s ease;
-      background: white;
-    }
-
-    textarea:focus, input:focus {
-      outline: none;
-      border-color: #667eea;
-      box-shadow: 0 0 0 3px rgba(102,126,234,0.1);
-    }
-
-    textarea { resize: vertical; min-height: 100px; }
-
-    .input-hint {
-      font-size: 0.85rem;
-      color: #666;
-      margin-top: 4px;
-    }
-
-    .btn {
-      background: linear-gradient(135deg,#667eea,#764ba2);
-      color: white;
+      padding: 10px;
+      margin-top: 6px;
+      margin-bottom: 20px;
+      border-radius: 6px;
       border: none;
-      padding: 15px;
-      border-radius: 10px;
       font-size: 1rem;
-      font-weight: 600;
+    }
+
+    button {
+      background: #10b981;
+      border: none;
+      padding: 12px 20px;
+      color: white;
+      font-size: 1rem;
+      border-radius: 6px;
       cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      width: 100%;
-      transition: all 0.3s ease;
     }
-
-    .btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 20px rgba(102,126,234,0.3);
-    }
-
-    .btn:disabled {
-      opacity: 0.6;
-      cursor: not-allowed;
-      transform: none;
-    }
-
-    .status-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit,minmax(180px,1fr));
-      gap: 20px;
-    }
-
-    .status-item {
-      background: rgba(255,255,255,0.8);
-      padding: 18px;
-      border-radius: 12px;
-      text-align: center;
-      border: 2px solid transparent;
-      transition: all 0.3s ease;
-    }
-
-    .status-item i { font-size: 1.8rem; margin-bottom: 8px; }
-
-    .status-item.healthy {
-      border-color: #10b981;
-      background: rgba(16,185,129,0.1);
-    }
-
-    .status-item.error {
-      border-color: #ef4444;
-      background: rgba(239,68,68,0.1);
-    }
-
-    .status-item.healthy i { color: #10b981; }
-    .status-item.error i { color: #ef4444; }
-
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .spinner {
-      width: 36px;
-      height: 36px;
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #667eea;
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 12px;
-    }
-
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     .results {
-      display: none;
-      background: #f8fafc;
+      margin-top: 20px;
+      background: white;
+      color: #333;
       border-radius: 10px;
       padding: 20px;
-      margin-top: 20px;
-      animation: fadeIn 0.4s ease;
     }
-
-    .results.show { display: block; }
-
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-
-    .call-item {
-      background: white;
-      padding: 12px;
-      border-radius: 8px;
-      margin-bottom: 10px;
-      border-left: 4px solid #667eea;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-    }
-
-    .call-number { font-weight: 600; font-size: 1.05rem; }
-    .call-prompt { color: #666; margin-top: 4px; font-size: 0.9rem; }
 
     .toast {
       position: fixed;
       top: 20px;
       right: 20px;
       background: white;
-      padding: 16px 20px;
-      border-radius: 8px;
-      box-shadow: 0 8px 24px rgba(0,0,0,0.15);
-      border-left: 4px solid #10b981;
+      color: #333;
+      padding: 10px 20px;
+      border-radius: 6px;
+      border-left: 5px solid #10b981;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: none;
       z-index: 1000;
-      transform: translateX(400px);
-      transition: transform 0.3s ease;
     }
 
-    .toast.error { border-left-color: #ef4444; }
+    .toast.error {
+      border-left-color: #ef4444;
+    }
 
-    .toast.show { transform: translateX(0); }
-
-    @media (max-width: 768px) {
-      .main-content { grid-template-columns: 1fr; gap: 20px; }
-      h1 { font-size: 2rem; }
+    .loading {
+      margin-top: 10px;
+      color: #fff;
     }
   </style>
 </head>
 <body>
   <div class="container">
-    <!-- Header -->
-    <header class="header">
-      <div class="logo"><i class="fas fa-phone-alt"></i></div>
-      <h1>AgentReach Systems</h1>
-      <p class="subtitle">Intelligent Outbound Calling Platform</p>
-    </header>
+    <h1>📞 AgentReach Outbound Caller</h1>
 
-    <!-- Main Content -->
-    <div class="main-content">
-      <!-- Phone Numbers & Prompt Form -->
-      <div class="card">
-        <div class="card-header">
-          <i class="fas fa-list-ol"></i>
-          <h2>Phone Numbers &amp; Prompt</h2>
-        </div>
-        <form id="callerForm" novalidate>
-  <div class="form-group">
-    <label for="numbers">Phone Numbers</label>
-    <textarea
-      id="numbers"
-      name="numbers"
-      placeholder="+1234567890, +0987654321, +1122334455"
-    ></textarea>
-    <div class="input-hint">Enter multiple numbers separated by commas</div>
-  </div>
+    <form id="callerForm" novalidate>
+      <label for="numbers">Phone Numbers (comma separated)</label>
+      <textarea id="numbers" name="numbers" placeholder="+1234567890, +0987654321"></textarea>
 
-  <div class="form-group">
-    <label for="prompt">Call Prompt (optional)</label>
-    <textarea
-      id="prompt"
-      name="prompt"
-      placeholder="e.g. You are calling to conduct a customer satisfaction survey..."
-    ></textarea>
-    <div class="input-hint">Custom AI conversation prompt</div>
-  </div>
+      <label for="prompt">Call Prompt (optional)</label>
+      <textarea id="prompt" name="prompt" placeholder="Why is the agent calling?"></textarea>
 
-  <!-- 🔽 Add this file upload block -->
-  <div class="form-group">
-    <label for="file">Or Upload File</label>
-    <input type="file" id="file" name="file" accept=".txt,.csv,.docx,.pdf,.xlsx" />
-    <div class="input-hint">Upload a file with phone numbers (optional)</div>
-  </div>
+      <label for="file">Or Upload File with Phone Numbers</label>
+      <input type="file" id="file" name="file" accept=".txt,.csv,.docx,.pdf,.xlsx" />
 
-  <button type="submit" class="btn" id="submitBtn">
-    <i class="fas fa-phone"></i> Start Outbound Calls
-  </button>
-</form>
+      <button type="submit" id="submitBtn"><i class="fas fa-phone"></i> Start Outbound Calls</button>
+    </form>
 
-      </div>
+    <div class="loading" id="loading" style="display:none;">Processing calls...</div>
 
-      <!-- System Status -->
-      <div class="card">
-        <div class="card-header">
-          <i class="fas fa-chart-line"></i>
-          <h2>System Status</h2>
-        </div>
-        <div class="status-grid">
-          <div class="status-item" id="apiStatus">
-            <i class="fas fa-server"></i>
-            <div>API Status</div>
-            <div id="apiStatusText">Checking...</div>
-          </div>
-          <div class="status-item" id="agentStatus">
-            <i class="fas fa-robot"></i>
-            <div>Agent Status</div>
-            <div id="agentStatusText">Checking...</div>
-          </div>
-        </div>
-        <div class="loading" id="loading">
-          <div class="spinner"></div>
-          <p>Processing calls...</p>
-        </div>
-      </div>
+    <div class="results" id="results" style="display:none;">
+      <h3>Call Results</h3>
+      <div id="callResults"></div>
     </div>
 
-    <!-- Call Results -->
-    <div class="card">
-      <div class="card-header">
-        <i class="fas fa-history"></i>
-        <h2>Call Results</h2>
-      </div>
-      <div class="results" id="results">
-        <div id="callResults"></div>
-      </div>
-      <div id="noResults" style="text-align:center;color:#666;padding:30px;">
-        <i class="fas fa-info-circle" style="font-size:2.5rem;opacity:0.5;"></i>
-        <p>No calls initiated yet. Start your first outbound campaign above!</p>
-      </div>
-    </div>
+    <div class="toast" id="toast"></div>
   </div>
 
   <script>
     const API_BASE_URL = 'https://mohamedfahim-agentreach-systems.hf.space';
 
-    // Utility: show toast notifications
     function showToast(message, isError = false) {
-      const toast = document.createElement('div');
-      toast.className = `toast${isError ? ' error' : ''}`;
-      toast.innerHTML = `
-        <div style="display:flex;align-items:center;gap:8px;">
-          <i class="fas ${isError ? 'fa-exclamation-circle' : 'fa-check-circle'}"></i>
-          <span>${message}</span>
-        </div>`;
-      document.body.appendChild(toast);
-      requestAnimationFrame(() => toast.classList.add('show'));
-      setTimeout(() => {
-        toast.classList.remove('show');
-        setTimeout(() => document.body.removeChild(toast), 300);
-      }, 4000);
+      const toast = document.getElementById('toast');
+      toast.className = 'toast' + (isError ? ' error' : '');
+      toast.innerText = message;
+      toast.style.display = 'block';
+      setTimeout(() => { toast.style.display = 'none'; }, 4000);
     }
 
-    // Fill sample data
-    function addSampleData() {
-      document.getElementById('numbers').value =
-        '+1234567890, +0987654321, +1122334455';
-      document.getElementById('prompt').value =
-        'Demo call: Please press 1 to continue.';
-    }
-
-    // Check API & Agent health
-    async function checkSystemStatus() {
-      try {
-        let res = await fetch(`${API_BASE_URL}/health`);
-        let json = await res.json();
-        const apiEl = document.getElementById('apiStatus');
-        const apiTxt = document.getElementById('apiStatusText');
-        if (res.ok && json.status === 'healthy') {
-          apiEl.className = 'status-item healthy';
-          apiTxt.textContent = 'Online';
-        } else {
-          apiEl.className = 'status-item error';
-          apiTxt.textContent = 'Offline';
-        }
-
-        res = await fetch(`${API_BASE_URL}/agent-status`);
-        json = await res.json();
-        const agentEl = document.getElementById('agentStatus');
-        const agentTxt = document.getElementById('agentStatusText');
-        if (res.ok && json.agent === 'connected') {
-          agentEl.className = 'status-item healthy';
-          agentTxt.textContent = 'Connected';
-        } else {
-          agentEl.className = 'status-item error';
-          agentTxt.textContent = 'Disconnected';
-        }
-      } catch (e) {
-        console.error(e);
-        ['apiStatus','agentStatus'].forEach(id => {
-          document.getElementById(id).className = 'status-item error';
-          document.getElementById(id + 'Text').textContent = 'Error';
-        });
-      }
-    }
-
-    // Display call results
-    function displayResults(calls) {
-      const out = document.getElementById('callResults');
-      out.innerHTML = calls.map(c => `
-        <div class="call-item">
-          <div class="call-number">
-            <i class="fas fa-phone" style="margin-right:6px;color:#667eea;"></i>
-            ${c.number}
-          </div>
-          <div class="call-prompt">
-            <i class="fas fa-comment" style="margin-right:6px;color:#666;"></i>
-            ${c.prompt || 'Default prompt'}
-          </div>
-        </div>
+    function displayResults(data) {
+      const container = document.getElementById('callResults');
+      container.innerHTML = data.map(call => `
+        <div><strong>${call.number}</strong> - ${call.prompt}</div>
       `).join('');
-      document.getElementById('results').classList.add('show');
-      document.getElementById('noResults').style.display = 'none';
+      document.getElementById('results').style.display = 'block';
     }
 
-    // Form submission handler
     document.getElementById('callerForm').addEventListener('submit', async e => {
-  e.preventDefault();
-  const numsRaw  = document.getElementById('numbers').value.trim();
-  const prompt   = document.getElementById('prompt').value.trim();
+      e.preventDefault();
 
-  if (!numsRaw) {
-    return showToast('Please enter at least one phone number', true);
-  }
+      const numsRaw = document.getElementById('numbers').value.trim();
+      const prompt = document.getElementById('prompt').value.trim();
+      const fileInput = document.getElementById('file');
+      const submitBtn = document.getElementById('submitBtn');
+      const loading = document.getElementById('loading');
 
-  const numbers = numsRaw.split(',').map(n => n.trim()).filter(n => n);
-  if (numbers.length === 0) {
-    return showToast('Please enter valid phone numbers', true);
-  }
+      const formData = new FormData();
+      if (numsRaw) formData.append('numbers_list_str', numsRaw);
+      formData.append('prompt', prompt || '');
+      if (fileInput.files.length > 0) {
+        formData.append('file', fileInput.files[0]);
+      }
 
-  const submitBtn = document.getElementById('submitBtn');
-  const loading   = document.getElementById('loading');
-  submitBtn.disabled = true;
-  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-  loading.style.display = 'block';
+      submitBtn.disabled = true;
+      loading.style.display = 'block';
+      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Calling...';
 
-  try {
-  const formData = new FormData();
-  formData.append('numbers_list_str', numsRaw);
-  formData.append('prompt', prompt);
-
-  const fileInput = document.getElementById('file');
-  if (fileInput && fileInput.files.length > 0) {
-    formData.append('file', fileInput.files[0]);
-  }
-
-  const res = await fetch(`${API_BASE_URL}/outbound_caller`, {
-    method: 'POST',
-    body: formData
-  });
-
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(`HTTP ${res.status}: ${text}`);
-  }
-
-  const data = await res.json();
-  showToast(`✅ Successfully initiated calls to ${data.length} numbers!`);
-  displayResults(data);
-}
- catch (err) {
-    console.error(err);
-    let msg = 'Failed to initiate calls.';
-    if (err.message.includes('405')) {
-      msg += ' Please check that the endpoint accepts POST requests.';
-    } else if (err.message.includes('422')) {
-      msg += ' Invalid request format.';
-    } else {
-      msg += ` ${err.message}`;
-    }
-    showToast(msg, true);
-  } finally {
-    submitBtn.disabled = false;
-    submitBtn.innerHTML = '<i class="fas fa-phone"></i> Start Outbound Calls';
-    loading.style.display = 'none';
-  }
-});
-
+      try {
+        const res = await fetch(`${API_BASE_URL}/outbound_caller`, {
+          method: 'POST',
+          body: formData
+        });
 
         if (!res.ok) {
-          const text = await res.text();
-          throw new Error(`HTTP ${res.status}: ${text}`);
+          const errorText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errorText}`);
         }
+
         const data = await res.json();
-        showToast(`Successfully initiated calls to ${data.length} numbers!`);
+        showToast(`✅ Calls sent to ${data.length} numbers`);
         displayResults(data);
 
       } catch (err) {
         console.error(err);
-        let msg = 'Failed to initiate calls.';
-        if (err.message.includes('405')) {
-          msg += ' Please check that the endpoint accepts POST requests.';
-        } else if (err.message.includes('422')) {
-          msg += ' Invalid request format.';
-        } else {
-          msg += ` ${err.message}`;
-        }
-        showToast(msg, true);
-
+        showToast('❌ ' + err.message, true);
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = '<i class="fas fa-phone"></i> Start Outbound Calls';
         loading.style.display = 'none';
       }
-    });
-
-    // On load
-    document.addEventListener('DOMContentLoaded', () => {
-      // Inject sample & test buttons
-      const firstGroup = document.querySelector('.card form .form-group:first-child');
-      const wrapper = document.createElement('div');
-      wrapper.style.marginTop = '12px';
-
-      const sampleBtn = document.createElement('button');
-      sampleBtn.type = 'button';
-      sampleBtn.innerHTML = '<i class="fas fa-magic"></i> Sample Data';
-      sampleBtn.onclick = addSampleData;
-      sampleBtn.style.cssText = `
-        background: transparent;
-        border: 2px dashed #667eea;
-        color: #667eea;
-        padding: 8px 16px;
-        border-radius: 8px;
-        cursor: pointer;
-        margin-right: 8px;
-      `;
-      wrapper.appendChild(sampleBtn);
-
-      const testBtn = document.createElement('button');
-      testBtn.type = 'button';
-      testBtn.innerHTML = '<i class="fas fa-plug"></i> Test API';
-      testBtn.onclick = async () => {
-        testBtn.disabled = true;
-        testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
-        try {
-          const r = await fetch(`${API_BASE_URL}/health`);
-          const j = await r.json();
-          if (r.ok && j.status === 'healthy') {
-            showToast('✅ API Connection Successful!');
-            checkSystemStatus();
-          } else {
-            showToast('⚠️ API responded: ' + JSON.stringify(j), true);
-          }
-        } catch (e) {
-          showToast('❌ API Connection Failed: ' + e.message, true);
-        } finally {
-          testBtn.disabled = false;
-          testBtn.innerHTML = '<i class="fas fa-plug"></i> Test API';
-        }
-      };
-      testBtn.style.cssText = `
-        background: transparent;
-        border: 2px dashed #10b981;
-        color: #10b981;
-        padding: 8px 16px;
-        border-radius: 8px;
-        cursor: pointer;
-      `;
-      wrapper.appendChild(testBtn);
-
-      firstGroup.parentNode.insertBefore(wrapper, firstGroup.nextSibling);
-
-      // Initial status check
-      checkSystemStatus();
-      setInterval(checkSystemStatus, 30000);
     });
   </script>
 </body>
