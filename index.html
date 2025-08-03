@@ -348,15 +348,22 @@
 
     .file-name {
       margin-top: 10px;
-      padding: 8px 12px;
+      padding: 12px 16px;
       background: rgba(16,185,129,0.1);
-      border: 1px solid #10b981;
-      border-radius: 6px;
+      border: 2px solid #10b981;
+      border-radius: 8px;
       color: #10b981;
-      font-size: 0.9rem;
+      font-size: 0.95rem;
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 10px;
+      box-shadow: 0 2px 4px rgba(16,185,129,0.1);
+      animation: slideIn 0.3s ease;
+    }
+
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateY(-10px); }
+      to { opacity: 1; transform: translateY(0); }
     }
 
     .file-preview {
@@ -777,9 +784,10 @@
         }
 
         fileName.innerHTML = `
-          <i class="fas ${fileIcon}"></i>
-          <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
-          <i class="fas fa-times" style="margin-left: auto; cursor: pointer;" onclick="clearFile()"></i>
+          <i class="fas ${fileIcon}" style="color: #10b981;"></i>
+          <span style="font-weight: 600;">${file.name}</span>
+          <span style="color: #666; font-size: 0.8rem;">(${(file.size / 1024).toFixed(1)} KB)</span>
+          <i class="fas fa-times" style="margin-left: auto; cursor: pointer; color: #ef4444; padding: 4px;" onclick="clearFile()" title="Remove file"></i>
         `;
         fileName.style.display = 'flex';
 
@@ -831,7 +839,13 @@
           filePreview.innerHTML = `
             <div class="preview-header">
               <i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>
-              Error processing file
+              File Upload Error: <strong>${file.name}</strong>
+            </div>
+            <div style="margin: 8px 0; padding: 8px; background: rgba(239,68,68,0.05); border-radius: 6px;">
+              <strong>📁 File Details:</strong><br>
+              • Name: ${file.name}<br>
+              • Size: ${(file.size / 1024).toFixed(1)} KB<br>
+              • Status: <span style="color: #ef4444; font-weight: 600;">Processing Failed</span>
             </div>
             <div style="color: #666;">
               ${error.message || 'Unable to process this file format'}
