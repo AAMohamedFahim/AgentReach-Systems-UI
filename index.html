@@ -6,16 +6,195 @@
   <title>AgentReach Systems - Outbound Caller</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
   <style>
-    /* Place your existing CSS here (omitted for brevity) */
+    /* Reset & Base */
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; background: linear-gradient(135deg,#667eea 0%,#764ba2 100%); min-height:100vh; color:#333; }
-    .container { max-width:1200px; margin:0 auto; padding:20px; display:flex; flex-direction:column; }
-    .header { text-align:center; margin-bottom:40px; padding:40px 0; }
-    .logo { background:rgba(255,255,255,0.15); backdrop-filter:blur(10px); border-radius:20px; padding:30px; display:inline-block; border:1px solid rgba(255,255,255,0.2); }
-    .logo i { font-size:3rem; color:white; }
-    h1 { color:white; font-size:2.5rem; }
-    .subtitle { color:rgba(255,255,255,0.9); font-size:1.2rem; }
-    /* ... rest of CSS ... */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg,#667eea 0%,#764ba2 100%);
+      min-height: 100vh;
+      color: #333;
+      line-height: 1.5;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* Container */
+    .container {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 30px;
+    }
+
+    /* Header */
+    .header {
+      text-align: center;
+      color: #fff;
+    }
+    .logo {
+      background: rgba(255,255,255,0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 20px;
+      display: inline-block;
+      border: 1px solid rgba(255,255,255,0.2);
+      margin-bottom: 10px;
+    }
+    .logo i { font-size: 3rem; }
+    h1 { font-size: 2.5rem; }
+    .subtitle { font-size: 1.1rem; opacity: 0.9; }
+
+    /* Cards */
+    .card {
+      background: rgba(255,255,255,0.2);
+      backdrop-filter: blur(8px);
+      border-radius: 16px;
+      padding: 20px;
+      border: 1px solid rgba(255,255,255,0.25);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 15px;
+      color: #fff;
+    }
+    .card-header i { font-size: 1.5rem; }
+    .card-header h2 { font-size: 1.4rem; }
+
+    /* Forms */
+    .form-group {
+      margin-bottom: 15px;
+      display: flex;
+      flex-direction: column;
+    }
+    label {
+      margin-bottom: 6px;
+      color: #fff;
+      font-weight: 500;
+    }
+    textarea {
+      resize: vertical;
+      min-height: 60px;
+      padding: 10px;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .input-hint {
+      margin-top: 4px;
+      font-size: 0.85rem;
+      color: #eef;
+    }
+
+    /* Buttons */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #10b981;
+      color: #fff;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .btn:disabled { opacity: 0.6; cursor: not-allowed; }
+    .btn:hover:not(:disabled) { background: #0f9e70; }
+
+    /* Status Grid */
+    .status-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 15px;
+    }
+    .status-item {
+      background: rgba(255,255,255,0.15);
+      padding: 12px;
+      border-radius: 8px;
+      text-align: center;
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border: 2px solid transparent;
+    }
+    .status-item i { font-size: 1.3rem; }
+    .status-item.healthy { border-color: #34d399; }
+    .status-item.error { border-color: #f87171; }
+
+    /* Loading Spinner */
+    .loading {
+      display: none;
+      margin-top: 15px;
+      text-align: center;
+      color: #eef;
+    }
+    .spinner {
+      width: 36px;
+      height: 36px;
+      border: 4px solid rgba(255,255,255,0.3);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 10px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Results */
+    .results { display: none; margin-top: 15px; }
+    .call-item {
+      background: rgba(255,255,255,0.1);
+      padding: 10px;
+      margin-bottom: 8px;
+      border-radius: 6px;
+      color: #fff;
+    }
+    .call-number, .call-prompt { display: flex; align-items: center; gap: 6px; }
+
+    /* “No results” placeholder */
+    #noResults { display: block; }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 20px; left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: rgba(0,0,0,0.75);
+      color: #fff;
+      padding: 12px 20px;
+      border-radius: 8px;
+      font-size: 0.95rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.3s, transform 0.3s;
+      z-index: 1000;
+    }
+    .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .toast.error { background: rgba(248,113,113,0.9); }
+
+    /* Sample/Test btn wrapper */
+    .sample-test-wrapper { margin-top: 10px; display: flex; gap: 8px; }
+    .sample-test-wrapper button {
+      background: transparent;
+      border: 2px dashed;
+      padding: 6px 12px;
+      border-radius: 6px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.9rem;
+      color: #eef;
+    }
+    .sample-test-wrapper .fa-magic { color: #667eea; border-color: #667eea; }
+    .sample-test-wrapper .fa-plug  { color: #10b981; border-color: #10b981; }
   </style>
 </head>
 <body>
@@ -25,109 +204,161 @@
       <h1>AgentReach Systems</h1>
       <p class="subtitle">Intelligent Outbound Calling Platform</p>
     </header>
+
     <div class="main-content">
+      <!-- Phone Numbers Form -->
       <div class="card">
-        <div class="card-header"><i class="fas fa-list-ol"></i><h2>Phone Numbers</h2></div>
+        <div class="card-header">
+          <i class="fas fa-list-ol"></i><h2>Phone Numbers</h2>
+        </div>
         <form id="callerForm">
           <div class="form-group">
             <label for="numbers">Phone Numbers</label>
             <textarea id="numbers" name="numbers" required placeholder="+1234567890, +0987654321"></textarea>
             <div class="input-hint">Separate with commas</div>
+            <div class="sample-test-wrapper" id="sampleTest"></div>
           </div>
           <div class="form-group">
             <label for="prompt">Call Prompt</label>
             <textarea id="prompt" name="prompt" placeholder="Optional custom prompt"></textarea>
           </div>
-          <button type="submit" class="btn" id="submitBtn"><i class="fas fa-phone"></i> Start Outbound Calls</button>
+          <button type="submit" class="btn" id="submitBtn">
+            <i class="fas fa-phone"></i> Start Outbound Calls
+          </button>
         </form>
       </div>
+
+      <!-- System Status -->
       <div class="card">
-        <div class="card-header"><i class="fas fa-chart-line"></i><h2>System Status</h2></div>
-        <div class="status-grid">
-          <div class="status-item" id="apiStatus"><i class="fas fa-server"></i><div>API Status</div><div id="apiStatusText">Checking...</div></div>
-          <div class="status-item" id="agentStatus"><i class="fas fa-robot"></i><div>Agent Status</div><div id="agentStatusText">Checking...</div></div>
+        <div class="card-header">
+          <i class="fas fa-chart-line"></i><h2>System Status</h2>
         </div>
-        <div class="loading" id="loading"><div class="spinner"></div><p>Processing calls...</p></div>
+        <div class="status-grid">
+          <div class="status-item" id="apiStatus">
+            <i class="fas fa-server"></i>
+            <div>API Status</div>
+            <div id="apiStatusText">Checking...</div>
+          </div>
+          <div class="status-item" id="agentStatus">
+            <i class="fas fa-robot"></i>
+            <div>Agent Status</div>
+            <div id="agentStatusText">Checking...</div>
+          </div>
+        </div>
+        <div class="loading" id="loading">
+          <div class="spinner"></div>
+          <p>Processing calls...</p>
+        </div>
       </div>
-    </div>
-    <div class="card status-card">
-      <div class="card-header"><i class="fas fa-history"></i><h2>Call Results</h2></div>
-      <div class="results" id="results"><div id="callResults"></div></div>
-      <div id="noResults" style="text-align:center;color:#666;padding:40px;"><i class="fas fa-info-circle" style="font-size:3rem;opacity:0.5;"></i><p>No calls initiated yet.</p></div>
+
+      <!-- Call Results -->
+      <div class="card">
+        <div class="card-header">
+          <i class="fas fa-history"></i><h2>Call Results</h2>
+        </div>
+        <div class="results" id="results">
+          <div id="callResults"></div>
+        </div>
+        <div id="noResults" style="text-align:center;color:#eee;padding:40px;">
+          <i class="fas fa-info-circle" style="font-size:3rem;opacity:0.5;"></i>
+          <p>No calls initiated yet.</p>
+        </div>
+      </div>
     </div>
   </div>
 
   <script>
     const API_BASE_URL = 'https://mohamedfahim-agentreach-systems.hf.space';
 
-    window.addSampleData = function() {
+    // Sample data and Test API buttons
+    function addSampleData() {
       document.getElementById('numbers').value = '+1234567890, +0987654321, +1122334455';
       document.getElementById('prompt').value = 'Demo call: Please press 1 to continue.';
-    };
+    }
 
     async function checkSystemStatus() {
       try {
         const res = await fetch(`${API_BASE_URL}/health`);
         const data = await res.json();
-        const apiEl = document.getElementById('apiStatus'), apiTxt = document.getElementById('apiStatusText');
-        if (res.ok && data.status === 'healthy') { apiEl.className = 'status-item healthy'; apiTxt.textContent = 'Online'; }
-        else { apiEl.className = 'status-item error'; apiTxt.textContent = 'Offline'; }
+        const apiEl = document.getElementById('apiStatus'),
+              apiTxt = document.getElementById('apiStatusText');
+        if (res.ok && data.status === 'healthy') {
+          apiEl.classList.add('healthy'); apiTxt.textContent = 'Online';
+        } else {
+          apiEl.classList.add('error'); apiTxt.textContent = 'Offline';
+        }
 
         const aRes = await fetch(`${API_BASE_URL}/agent-status`);
         const aData = await aRes.json();
-        const agentEl = document.getElementById('agentStatus'), agentTxt = document.getElementById('agentStatusText');
-        if (aRes.ok && aData.agent === 'connected') { agentEl.className = 'status-item healthy'; agentTxt.textContent = 'Connected'; }
-        else { agentEl.className = 'status-item error'; agentTxt.textContent = 'Disconnected'; }
-      } catch (err) {
-        console.error(err);
+        const agentEl = document.getElementById('agentStatus'),
+              agentTxt = document.getElementById('agentStatusText');
+        if (aRes.ok && aData.agent === 'connected') {
+          agentEl.classList.add('healthy'); agentTxt.textContent = 'Connected';
+        } else {
+          agentEl.classList.add('error'); agentTxt.textContent = 'Disconnected';
+        }
+      } catch {
         ['apiStatus','agentStatus'].forEach(id => {
-          document.getElementById(id).className = 'status-item error';
-          document.getElementById(id+'Text').textContent = 'Error';
+          const el = document.getElementById(id);
+          el.classList.add('error');
+          el.querySelector('div:last-child').textContent = 'Error';
         });
       }
     }
 
-    function showToast(message, isError = false) {
+    function showToast(msg, isError=false) {
       const toast = document.createElement('div');
-      toast.className = `toast ${isError ? 'error' : ''}`;
-      toast.innerHTML = `<div style="display:flex;align-items:center;gap:10px;"><i class="fas ${isError?'fa-exclamation-circle':'fa-check-circle'}"></i><span>${message}</span></div>`;
+      toast.className = `toast${isError?' error':''}`;
+      toast.innerHTML = `<i class="fas ${isError?'fa-exclamation-circle':'fa-check-circle'}"></i><span>${msg}</span>`;
       document.body.appendChild(toast);
-      setTimeout(() => toast.classList.add('show'), 100);
-      setTimeout(() => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); }, 4000);
+      setTimeout(() => toast.classList.add('show'), 50);
+      setTimeout(() => {
+        toast.classList.remove('show');
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
     }
 
-    document.getElementById('callerForm').addEventListener('submit', async (e) => {
+    // Handle form submission
+    document.getElementById('callerForm').addEventListener('submit', async e => {
       e.preventDefault();
-      const numbers = e.target.numbers.value.trim();
-      const prompt = e.target.prompt.value.trim();
-      if (!numbers) { showToast('Enter phone numbers', true); return; }
-      const list = numbers.split(',').map(n => n.trim()).filter(n => n);
-      if (list.length === 0) { showToast('Invalid numbers', true); return; }
+      const numbersTxt = e.target.numbers.value.trim();
+      const promptTxt = e.target.prompt.value.trim();
+      if (!numbersTxt) return showToast('Enter phone numbers', true);
 
-      const btn = document.getElementById('submitBtn');
-      const loading = document.getElementById('loading');
+      const list = numbersTxt.split(',').map(n=>n.trim()).filter(Boolean);
+      if (!list.length) return showToast('Invalid numbers', true);
+
+      const btn = document.getElementById('submitBtn'),
+            loading = document.getElementById('loading');
       btn.disabled = true;
       btn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
       loading.style.display = 'block';
-      document.getElementById('results').classList.remove('show');
+      document.getElementById('results').style.display = 'none';
       document.getElementById('noResults').style.display = 'none';
 
       try {
-        // Use GET with query params to satisfy FastAPI
-        const url = `${API_BASE_URL}/outbound_caller?numbers_list_str=${encodeURIComponent(numbers)}&prompt=${encodeURIComponent(prompt)}`;
-        const res = await fetch(url, { method: 'GET' });
+        const url = `${API_BASE_URL}/outbound_caller?numbers_list_str=${encodeURIComponent(numbersTxt)}&prompt=${encodeURIComponent(promptTxt)}`;
+        const res = await fetch(url);
         if (!res.ok) {
           const errText = await res.text();
           throw new Error(`HTTP ${res.status}: ${errText}`);
         }
         const data = await res.json();
-        displayResults(data);
+        // Render results
+        const container = document.getElementById('callResults');
+        container.innerHTML = data.map(c => `
+          <div class="call-item">
+            <div class="call-number"><i class="fas fa-phone"></i> ${c.number}</div>
+            <div class="call-prompt"><i class="fas fa-comment"></i> ${c.prompt||'Default prompt'}</div>
+          </div>
+        `).join('');
+        document.getElementById('results').style.display = 'block';
         showToast(`Initiated calls to ${data.length} numbers!`);
       } catch (err) {
         console.error(err);
-        let msg = 'Failed.';
-        if (err.message.includes('422')) msg += ' Missing required fields.';
-        else msg += ` ${err.message}`;
+        const msg = err.message.includes('422')
+          ? 'Failed: Missing required fields.'
+          : `Failed: ${err.message}`;
         showToast(msg, true);
       } finally {
         btn.disabled = false;
@@ -136,52 +367,38 @@
       }
     });
 
-    function displayResults(calls) {
-      const container = document.getElementById('callResults');
-      container.innerHTML = calls.map(c => `
-        <div class="call-item">
-          <div class="call-number"><i class="fas fa-phone"></i> ${c.number}</div>
-          <div class="call-prompt"><i class="fas fa-comment"></i> ${c.prompt || 'Default prompt'}</div>
-        </div>
-      `).join('');
-      document.getElementById('results').classList.add('show');
-      document.getElementById('noResults').style.display = 'none';
-    }
+    // On load: insert sample/test buttons + check status
+    window.addEventListener('DOMContentLoaded', () => {
+      const wrapper = document.getElementById('sampleTest');
+      const btn1 = document.createElement('button');
+      btn1.type = 'button';
+      btn1.innerHTML = '<i class="fas fa-magic"></i> Add Sample Data';
+      btn1.onclick = addSampleData;
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const firstGroup = document.querySelector('.card .form-group:first-child');
-      const wrapper = document.createElement('div');
-      wrapper.style.marginTop = '10px';
-
-      const sampleBtn = document.createElement('button');
-      sampleBtn.type = 'button';
-      sampleBtn.innerHTML = '<i class="fas fa-magic"></i> Add Sample Data';
-      sampleBtn.onclick = addSampleData;
-      sampleBtn.style.cssText = 'background:transparent;border:2px dashed #667eea;color:#667eea;padding:6px 12px;border-radius:6px;cursor:pointer;margin-right:8px;';
-
-      const testBtn = document.createElement('button');
-      testBtn.type = 'button';
-      testBtn.innerHTML = '<i class="fas fa-plug"></i> Test API';
-      testBtn.onclick = async () => {
-        testBtn.disabled = true;
-        testBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
+      const btn2 = document.createElement('button');
+      btn2.type = 'button';
+      btn2.innerHTML = '<i class="fas fa-plug"></i> Test API';
+      btn2.onclick = async () => {
+        btn2.disabled = true;
+        btn2.innerHTML = '<i class="fas fa-spinner fa-spin"></i>';
         try {
           const r = await fetch(`${API_BASE_URL}/health`);
           const j = await r.json();
-          if (r.ok && j.status === 'healthy') { showToast('API OK'); checkSystemStatus(); }
-          else { showToast('API status: ' + JSON.stringify(j), true); }
+          if (r.ok && j.status === 'healthy') {
+            showToast('API OK');
+            checkSystemStatus();
+          } else {
+            showToast('API status: ' + JSON.stringify(j), true);
+          }
         } catch (e) {
           showToast('Connection failed: ' + e.message, true);
         } finally {
-          testBtn.disabled = false;
-          testBtn.innerHTML = '<i class="fas fa-plug"></i> Test API';
+          btn2.disabled = false;
+          btn2.innerHTML = '<i class="fas fa-plug"></i> Test API';
         }
       };
-      testBtn.style.cssText = 'background:transparent;border:2px dashed #10b981;color:#10b981;padding:6px 12px;border-radius:6px;cursor:pointer;';
 
-      wrapper.append(sampleBtn, testBtn);
-      firstGroup.appendChild(wrapper);
-
+      wrapper.append(btn1, btn2);
       checkSystemStatus();
       setInterval(checkSystemStatus, 30000);
     });
