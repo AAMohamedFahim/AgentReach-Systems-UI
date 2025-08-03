@@ -2,82 +2,144 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>AgentReach Systems - Outbound Caller</title>
   <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
   <style>
-    /* CSS is unchanged, keep your styling here */
-    body {
-      font-family: 'Inter', sans-serif;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      min-height: 100vh;
+    /* Reset & Base */
+    * {
+      box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
-
-    .container {
-      max-width: 800px;
-      margin: auto;
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: #333;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
       padding: 20px;
-      color: white;
     }
 
-    textarea, input[type="file"] {
+    .card {
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+      max-width: 600px;
       width: 100%;
-      padding: 10px;
-      margin-top: 6px;
-      margin-bottom: 20px;
-      border-radius: 6px;
-      border: none;
-      font-size: 1rem;
+      padding: 30px;
+      color: #fff;
     }
 
-    button {
-      background: #10b981;
+    h1 {
+      font-size: 1.75rem;
+      font-weight: 700;
+      margin-bottom: 20px;
+      text-align: center;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-top: 15px;
+    }
+
+    textarea,
+    input[type="file"] {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
       border: none;
-      padding: 12px 20px;
-      color: white;
       font-size: 1rem;
-      border-radius: 6px;
+      outline: none;
+      transition: transform 0.2s;
+    }
+    textarea:focus,
+    input[type="file"]:focus {
+      transform: scale(1.02);
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #10b981;
+      padding: 14px 24px;
+      font-size: 1rem;
+      font-weight: 600;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
+      transition: background 0.3s, transform 0.2s;
+      margin-top: 20px;
+      width: 100%;
+    }
+    .btn i {
+      margin-right: 8px;
+    }
+    .btn:hover {
+      background: #059669;
+      transform: translateY(-2px);
+    }
+
+    .loading {
+      text-align: center;
+      margin-top: 15px;
+      font-weight: 600;
+      display: none;
     }
 
     .results {
-      margin-top: 20px;
-      background: white;
-      color: #333;
-      border-radius: 10px;
+      margin-top: 25px;
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 12px;
       padding: 20px;
+      display: none;
+    }
+    .results h3 {
+      font-size: 1.25rem;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .result-item {
+      padding: 12px;
+      border-bottom: 1px solid rgba(255,255,255,0.3);
+    }
+    .result-item:last-child {
+      border: none;
     }
 
     .toast {
       position: fixed;
       top: 20px;
       right: 20px;
-      background: white;
+      background: #fff;
       color: #333;
-      padding: 10px 20px;
-      border-radius: 6px;
+      padding: 14px 20px;
+      border-radius: 8px;
       border-left: 5px solid #10b981;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      box-shadow: 0 4px 16px rgba(0,0,0,0.2);
       display: none;
       z-index: 1000;
+      animation: slideIn 0.4s ease-out;
     }
-
     .toast.error {
       border-left-color: #ef4444;
     }
-
-    .loading {
-      margin-top: 10px;
-      color: #fff;
+    @keyframes slideIn {
+      from { opacity: 0; transform: translateX(100%); }
+      to { opacity: 1; transform: translateX(0); }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>📞 AgentReach Outbound Caller</h1>
-
+  <div class="card">
+    <h1><i class="fas fa-phone"></i> AgentReach Outbound Caller</h1>
     <form id="callerForm" novalidate>
       <label for="numbers">Phone Numbers (comma separated)</label>
       <textarea id="numbers" name="numbers" placeholder="+1234567890, +0987654321"></textarea>
@@ -88,12 +150,12 @@
       <label for="file">Or Upload File with Phone Numbers</label>
       <input type="file" id="file" name="file" accept=".txt,.csv,.docx,.pdf,.xlsx" />
 
-      <button type="submit" id="submitBtn"><i class="fas fa-phone"></i> Start Outbound Calls</button>
+      <button type="submit" id="submitBtn" class="btn"><i class="fas fa-phone-volume"></i> Start Outbound Calls</button>
     </form>
 
-    <div class="loading" id="loading" style="display:none;">Processing calls...</div>
+    <div class="loading" id="loading"><i class="fas fa-spinner fa-spin"></i> Processing calls...</div>
 
-    <div class="results" id="results" style="display:none;">
+    <div class="results" id="results">
       <h3>Call Results</h3>
       <div id="callResults"></div>
     </div>
@@ -115,7 +177,7 @@
     function displayResults(data) {
       const container = document.getElementById('callResults');
       container.innerHTML = data.map(call => `
-        <div><strong>${call.number}</strong> - ${call.prompt}</div>
+        <div class="result-item"><strong>${call.number}</strong> - ${call.prompt}</div>
       `).join('');
       document.getElementById('results').style.display = 'block';
     }
@@ -160,7 +222,7 @@
         showToast('❌ ' + err.message, true);
       } finally {
         submitBtn.disabled = false;
-        submitBtn.innerHTML = '<i class="fas fa-phone"></i> Start Outbound Calls';
+        submitBtn.innerHTML = '<i class="fas fa-phone-volume"></i> Start Outbound Calls';
         loading.style.display = 'none';
       }
     });
