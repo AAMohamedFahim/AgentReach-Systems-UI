@@ -450,18 +450,14 @@
       loading.style.display = 'block';
 
       try {
-        const body = new URLSearchParams();
-        body.append('numbers_list_str', numsRaw);
-        body.append('prompt', prompt);
+        const url = `${API_BASE_URL}/outbound_caller?numbers_list_str=${encodeURIComponent(numsRaw)}&prompt=${encodeURIComponent(prompt)}`;
 
-        const res = await fetch(`${API_BASE_URL}/outbound_caller`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-            'Accept': 'application/json'
-          },
-          body
-        });
+const res = await fetch(url, {
+  method: 'POST',
+  headers: {
+    'Accept': 'application/json'
+  }
+});
 
         if (!res.ok) {
           const text = await res.text();
