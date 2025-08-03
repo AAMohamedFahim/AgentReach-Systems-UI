@@ -432,32 +432,62 @@
 
     // Form submission handler
     document.getElementById('callerForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const numsRaw  = document.getElementById('numbers').value.trim();
-      const prompt   = document.getElementById('prompt').value.trim();
-      if (!numsRaw) {
-        return showToast('Please enter at least one phone number', true);
+  e.preventDefault();
+  const numsRaw  = document.getElementById('numbers').value.trim();
+  const prompt   = document.getElementById('prompt').value.trim();
+
+  if (!numsRaw) {
+    return showToast('Please enter at least one phone number', true);
+  }
+
+  const numbers = numsRaw.split(',').map(n => n.trim()).filter(n => n);
+  if (numbers.length === 0) {
+    return showToast('Please enter valid phone numbers', true);
+  }
+
+  const submitBtn = document.getElementById('submitBtn');
+  const loading   = document.getElementById('loading');
+  submitBtn.disabled = true;
+  submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+  loading.style.display = 'block';
+
+  try {
+    const url = `${API_BASE_URL}/outbound_caller?numbers_list_str=${encodeURIComponent(numsRaw)}&prompt=${encodeURIComponent(prompt)}`;
+    
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json'
       }
-      const numbers = numsRaw.split(',').map(n => n.trim()).filter(n => n);
-      if (numbers.length === 0) {
-        return showToast('Please enter valid phone numbers', true);
-      }
+    });
 
-      const submitBtn = document.getElementById('submitBtn');
-      const loading   = document.getElementById('loading');
-      submitBtn.disabled = true;
-      submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
-      loading.style.display = 'block';
+    if (!res.ok) {
+      const text = await res.text();
+      throw new Error(`HTTP ${res.status}: ${text}`);
+    }
 
-      try {
-        const url = `${API_BASE_URL}/outbound_caller?numbers_list_str=${encodeURIComponent(numsRaw)}&prompt=${encodeURIComponent(prompt)}`;
+    const data = await res.json();
+    showToast(`Successfully initiated calls to ${data.length} numbers!`);
+    displayResults(data);
 
-const res = await fetch(url, {
-  method: 'POST',
-  headers: {
-    'Accept': 'application/json'
+  } catch (err) {
+    console.error(err);
+    let msg = 'Failed to initiate calls.';
+    if (err.message.includes('405')) {
+      msg += ' Please check that the endpoint accepts POST requests.';
+    } else if (err.message.includes('422')) {
+      msg += ' Invalid request format.';
+    } else {
+      msg += ` ${err.message}`;
+    }
+    showToast(msg, true);
+  } finally {
+    submitBtn.disabled = false;
+    submitBtn.innerHTML = '<i class="fas fa-phone"></i> Start Outbound Calls';
+    loading.style.display = 'none';
   }
 });
+
 
         if (!res.ok) {
           const text = await res.text();
