@@ -450,7 +450,7 @@
                 </div>
               </div>
               <div id="fileName" class="file-name" style="display: none;"></div>
-              <div class="input-hint">Upload a file containing phone numbers</div>
+              <div class="input-hint">Upload a file containing phone numbers (TXT, CSV, DOCX, PDF, XLSX, XLS)</div>
             </div>
           </div>
 
@@ -620,11 +620,24 @@
       });
 
       function handleFileSelect(file) {
-        const allowedTypes = ['text/plain', 'text/csv', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/pdf'];
+        const allowedTypes = [
+          'text/plain',                                                                    // .txt
+          'text/csv',                                                                      // .csv
+          'application/csv',                                                               // .csv (alternative)
+          'application/vnd.openxmlformats-officedocument.wordprocessingml.document',      // .docx
+          'application/pdf',                                                               // .pdf
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',           // .xlsx
+          'application/vnd.ms-excel'                                                       // .xls
+        ];
         const maxSize = 10 * 1024 * 1024; // 10MB
+        
+        // Check file extension as well since MIME types can be inconsistent
+        const fileName = file.name.toLowerCase();
+        const allowedExtensions = ['.txt', '.csv', '.docx', '.pdf', '.xlsx', '.xls'];
+        const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
 
-        if (!allowedTypes.includes(file.type)) {
-          showToast('Please upload a valid file type (TXT, CSV, DOCX, PDF)', true);
+        if (!allowedTypes.includes(file.type) && !hasValidExtension) {
+          showToast('Please upload a valid file type (TXT, CSV, DOCX, PDF, XLSX, XLS)', true);
           fileInput.value = '';
           return;
         }
