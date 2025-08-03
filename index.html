@@ -412,7 +412,7 @@
     </div>
 
     <script>
-        const API_BASE_URL = 'https://mohamedfahim-agentreach-systems.hf.space/';
+        const API_BASE_URL = 'https://mohamedfahim-agentreach-systems.hf.space';
         
         // Check system status on load
         async function checkSystemStatus() {
@@ -483,10 +483,17 @@
             
             const formData = new FormData(e.target);
             const numbers = formData.get('numbers').trim();
-            const prompt = formData.get('prompt').trim();
+            const prompt = formData.get('prompt').trim() || '';
             
             if (!numbers) {
                 showToast('Please enter at least one phone number', true);
+                return;
+            }
+            
+            // Validate phone numbers format
+            const numberList = numbers.split(',').map(n => n.trim()).filter(n => n);
+            if (numberList.length === 0) {
+                showToast('Please enter valid phone numbers', true);
                 return;
             }
             
@@ -503,30 +510,54 @@
             noResults.style.display = 'none';
             
             try {
+                // Create the request body based on your FastAPI endpoint
+                const requestBody = new URLSearchParams();
+                requestBody.append('numbers_list_str', numbers);
+                requestBody.append('prompt', prompt);
+                
+                console.log('Sending request to:', `${API_BASE_URL}/outbound_caller`);
+                console.log('Request body:', requestBody.toString());
+                
                 const response = await fetch(`${API_BASE_URL}/outbound_caller`, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
+                        'Accept': 'application/json',
                     },
-                    body: new URLSearchParams({
-                        'numbers_list_str': numbers,
-                        'prompt': prompt || 'Default outbound call'
-                    })
+                    body: requestBody
                 });
                 
+                console.log('Response status:', response.status);
+                console.log('Response headers:', [...response.headers.entries()]);
+                
                 if (!response.ok) {
-                    throw new Error(`HTTP error! status: ${response.status}`);
+                    const errorText = await response.text();
+                    console.error('Error response:', errorText);
+                    throw new Error(`HTTP error! status: ${response.status} - ${errorText}`);
                 }
                 
                 const data = await response.json();
+                console.log('Response data:', data);
                 
                 // Show results
                 displayResults(data);
                 showToast(`Successfully initiated calls to ${data.length} numbers!`);
                 
             } catch (error) {
-                console.error('Error:', error);
-                showToast('Failed to initiate calls. Please check your connection and try again.', true);
+                console.error('Detailed error:', error);
+                let errorMessage = 'Failed to initiate calls. ';
+                
+                if (error.message.includes('CORS')) {
+                    errorMessage += 'CORS policy error. Please check API configuration.';
+                } else if (error.message.includes('NetworkError') || error.message.includes('Failed to fetch')) {
+                    errorMessage += 'Network error. Please check your connection and API availability.';
+                } else if (error.message.includes('422')) {
+                    errorMessage += 'Invalid request format. Please check your input.';
+                } else {
+                    errorMessage += error.message;
+                }
+                
+                showToast(errorMessage, true);
             } finally {
                 // Reset loading state
                 submitBtn.disabled = false;
@@ -558,22 +589,14 @@
             noResults.style.display = 'none';
         }
         
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            checkSystemStatus();
-            // Refresh status every 30 seconds
-            setInterval(checkSystemStatus, 30000);
-        });
-        
-        // Add sample data button functionality
-        function addSampleData() {
-            document.getElementById('numbers').value = '+1234567890, +0987654321, +1122334455';
-            document.getElementById('prompt').value = 'Hello! This is a test call from AgentReach Systems. We are conducting a brief customer satisfaction survey. Do you have a moment to chat?';
-        }
-        
         // Add sample data button
-        document.querySelector('.card .form-group:first-child').insertAdjacentHTML('beforeend', `
-            <button type="button" onclick="addSampleData()" style="
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add sample data button
+            const sampleButton = document.createElement('button');
+            sampleButton.type = 'button';
+            sampleButton.onclick = addSampleData;
+            sampleButton.innerHTML = '<i class="fas fa-magic"></i> Add Sample Data';
+            sampleButton.style.cssText = `
                 background: transparent;
                 border: 2px dashed #667eea;
                 color: #667eea;
@@ -583,10 +606,75 @@
                 cursor: pointer;
                 margin-top: 10px;
                 transition: all 0.3s ease;
-            " onmouseover="this.style.background='#667eea'; this.style.color='white';" onmouseout="this.style.background='transparent'; this.style.color='#667eea';">
-                <i class="fas fa-magic"></i> Add Sample Data
-            </button>
-        `);
+                margin-right: 10px;
+            `;
+            sampleButton.onmouseover = () => {
+                sampleButton.style.background = '#667eea';
+                sampleButton.style.color = 'white';
+            };
+            sampleButton.onmouseout = () => {
+                sampleButton.style.background = 'transparent';
+                sampleButton.style.color = '#667eea';
+            };
+            
+            // Add test API button
+            const testButton = document.createElement('button');
+            testButton.type = 'button';
+            testButton.innerHTML = '<i class="fas fa-plug"></i> Test API';
+            testButton.style.cssText = `
+                background: transparent;
+                border: 2px dashed #10b981;
+                color: #10b981;
+                padding: 10px 20px;
+                border-radius: 8px;
+                font-size: 0.9rem;
+                cursor: pointer;
+                margin-top: 10px;
+                transition: all 0.3s ease;
+            `;
+            testButton.onmouseover = () => {
+                testButton.style.background = '#10b981';
+                testButton.style.color = 'white';
+            };
+            testButton.onmouseout = () => {
+                testButton.style.background = 'transparent';
+                testButton.style.color = '#10b981';
+            };
+            testButton.onclick = async () => {
+                testButton.disabled = true;
+                testButton.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Testing...';
+                
+                try {
+                    const response = await fetch(`${API_BASE_URL}/health`);
+                    const data = await response.json();
+                    
+                    if (response.ok && data.status === 'healthy') {
+                        showToast('✅ API Connection Successful!');
+                        checkSystemStatus(); // Refresh status
+                    } else {
+                        showToast('⚠️ API responded but status is: ' + JSON.stringify(data), true);
+                    }
+                } catch (error) {
+                    showToast('❌ API Connection Failed: ' + error.message, true);
+                } finally {
+                    testButton.disabled = false;
+                    testButton.innerHTML = '<i class="fas fa-plug"></i> Test API';
+                }
+            };
+            
+            // Add buttons to the first form group
+            const firstFormGroup = document.querySelector('.card .form-group:first-child');
+            const buttonContainer = document.createElement('div');
+            buttonContainer.style.marginTop = '10px';
+            buttonContainer.appendChild(sampleButton);
+            buttonContainer.appendChild(testButton);
+            firstFormGroup.appendChild(buttonContainer);
+            
+            // Initialize status check
+            checkSystemStatus();
+            // Refresh status every 30 seconds
+            setInterval(checkSystemStatus, 30000);
+        });
     </script>
 </body>
 </html>
