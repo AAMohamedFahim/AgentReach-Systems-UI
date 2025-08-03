@@ -327,6 +327,25 @@
       margin: 5px 0;
     }
 
+    .file-types {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .file-type-icon {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: rgba(102,126,234,0.1);
+      border-radius: 6px;
+      font-size: 0.75rem;
+      color: #667eea;
+    }
+
     .file-name {
       margin-top: 10px;
       padding: 8px 12px;
@@ -338,6 +357,26 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .file-preview {
+      margin-top: 10px;
+      padding: 12px;
+      background: rgba(255,255,255,0.9);
+      border-radius: 8px;
+      border: 1px solid #e1e5e9;
+      font-size: 0.85rem;
+      color: #666;
+      text-align: left;
+    }
+
+    .preview-header {
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 8px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
     }
 
     .endpoint-grid {
@@ -393,6 +432,8 @@
       .main-content { grid-template-columns: 1fr; gap: 20px; }
       h1 { font-size: 2rem; }
       .status-grid { grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); }
+      .file-types { gap: 6px; }
+      .file-type-icon { font-size: 0.7rem; padding: 2px 6px; }
     }
   </style>
 </head>
@@ -442,15 +483,35 @@
             <div class="form-group">
               <label for="fileUpload">Upload File with Phone Numbers</label>
               <div class="file-upload-area" id="fileUploadArea">
-                <input type="file" id="fileUpload" name="file" accept=".txt,.csv,.docx,.pdf" style="display: none;">
+                <input type="file" id="fileUpload" name="file" accept=".txt,.csv,.docx,.pdf,.xlsx,.xls" style="display: none;">
                 <div class="file-upload-content">
                   <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: #667eea; margin-bottom: 10px;"></i>
                   <p><strong>Click to upload</strong> or drag and drop</p>
-                  <p style="font-size: 0.85rem; color: #666;">Supports: TXT, CSV, DOCX, PDF</p>
+                  <div class="file-types">
+                    <div class="file-type-icon">
+                      <i class="fas fa-file-alt"></i> TXT
+                    </div>
+                    <div class="file-type-icon">
+                      <i class="fas fa-file-csv"></i> CSV
+                    </div>
+                    <div class="file-type-icon">
+                      <i class="fas fa-file-excel"></i> XLSX
+                    </div>
+                    <div class="file-type-icon">
+                      <i class="fas fa-file-excel"></i> XLS
+                    </div>
+                    <div class="file-type-icon">
+                      <i class="fas fa-file-word"></i> DOCX
+                    </div>
+                    <div class="file-type-icon">
+                      <i class="fas fa-file-pdf"></i> PDF
+                    </div>
+                  </div>
                 </div>
               </div>
               <div id="fileName" class="file-name" style="display: none;"></div>
-              <div class="input-hint">Upload a file containing phone numbers (TXT, CSV, DOCX, PDF, XLSX, XLS)</div>
+              <div id="filePreview" class="file-preview" style="display: none;"></div>
+              <div class="input-hint">Upload a file containing phone numbers. Excel files (.xlsx, .xls) are fully supported!</div>
             </div>
           </div>
 
@@ -524,6 +585,9 @@
     </div>
   </div>
 
+  <!-- SheetJS Library for Excel Processing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
   <script>
     const API_BASE_URL = 'https://mohamedfahim-agentreach-systems.hf.space';
 
@@ -551,6 +615,53 @@
       document.getElementById('prompt').value = 'Hello! This is a demo call from AgentReach Systems. We\'d love your feedback on our service. Press 1 to continue.';
     }
 
+    // Extract phone numbers from Excel file
+    function extractPhoneNumbers(data, fileExtension) {
+      let phoneNumbers = [];
+      
+      try {
+        if (fileExtension === '.xlsx' || fileExtension === '.xls') {
+          // Process Excel file
+          const workbook = XLSX.read(data, { type: 'array' });
+          const firstSheetName = workbook.SheetNames[0];
+          const worksheet = workbook.Sheets[firstSheetName];
+          const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+          
+          // Extract phone numbers from all cells
+          jsonData.forEach((row, rowIndex) => {
+            row.forEach((cell, colIndex) => {
+              if (cell) {
+                const cellStr = String(cell).trim();
+                // Look for phone number patterns
+                const phonePattern = /(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g;
+                const matches = cellStr.match(phonePattern);
+                if (matches) {
+                  phoneNumbers.push(...matches.map(num => num.replace(/[^\d+]/g, '')));
+                }
+                // Also check if the entire cell looks like a phone number
+                if (/^[\+\-\(\)\d\s\.]{7,}$/.test(cellStr) && cellStr.replace(/[^\d]/g, '').length >= 7) {
+                  phoneNumbers.push(cellStr.replace(/[^\d+]/g, ''));
+                }
+              }
+            });
+          });
+          
+          return { numbers: [...new Set(phoneNumbers)], preview: jsonData.slice(0, 5) };
+        } else {
+          // Handle other file types (existing logic)
+          const text = new TextDecoder('utf-8').decode(data);
+          const phonePattern = /(?:\+?1[-.\s]?)?\(?[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}/g;
+          const matches = text.match(phonePattern) || [];
+          phoneNumbers = [...new Set(matches.map(num => num.replace(/[^\d+]/g, '')))];
+          
+          return { numbers: phoneNumbers, preview: text.split('\n').slice(0, 5) };
+        }
+      } catch (error) {
+        console.error('Error extracting phone numbers:', error);
+        throw new Error('Failed to extract phone numbers from file');
+      }
+    }
+
     // Toggle between manual entry and file upload
     function setupInputToggle() {
       const manualToggle = document.getElementById('manualToggle');
@@ -568,6 +679,7 @@
         const fileInput = document.getElementById('fileUpload');
         fileInput.value = '';
         document.getElementById('fileName').style.display = 'none';
+        document.getElementById('filePreview').style.display = 'none';
       });
 
       fileToggle.addEventListener('click', () => {
@@ -586,6 +698,7 @@
       const fileUploadArea = document.getElementById('fileUploadArea');
       const fileInput = document.getElementById('fileUpload');
       const fileName = document.getElementById('fileName');
+      const filePreview = document.getElementById('filePreview');
 
       // Click to upload
       fileUploadArea.addEventListener('click', () => {
@@ -619,7 +732,7 @@
         }
       });
 
-      function handleFileSelect(file) {
+      async function handleFileSelect(file) {
         const allowedTypes = [
           'text/plain',                                                                    // .txt
           'text/csv',                                                                      // .csv
@@ -632,9 +745,10 @@
         const maxSize = 10 * 1024 * 1024; // 10MB
         
         // Check file extension as well since MIME types can be inconsistent
-        const fileName = file.name.toLowerCase();
+        const fileNameLower = file.name.toLowerCase();
         const allowedExtensions = ['.txt', '.csv', '.docx', '.pdf', '.xlsx', '.xls'];
-        const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+        const hasValidExtension = allowedExtensions.some(ext => fileNameLower.endsWith(ext));
+        const fileExtension = allowedExtensions.find(ext => fileNameLower.endsWith(ext));
 
         if (!allowedTypes.includes(file.type) && !hasValidExtension) {
           showToast('Please upload a valid file type (TXT, CSV, DOCX, PDF, XLSX, XLS)', true);
@@ -648,13 +762,84 @@
           return;
         }
 
+        // Get file icon based on extension
+        let fileIcon = 'fa-file';
+        if (fileExtension === '.xlsx' || fileExtension === '.xls') {
+          fileIcon = 'fa-file-excel';
+        } else if (fileExtension === '.csv') {
+          fileIcon = 'fa-file-csv';
+        } else if (fileExtension === '.pdf') {
+          fileIcon = 'fa-file-pdf';
+        } else if (fileExtension === '.docx') {
+          fileIcon = 'fa-file-word';
+        } else if (fileExtension === '.txt') {
+          fileIcon = 'fa-file-alt';
+        }
+
         fileName.innerHTML = `
-          <i class="fas fa-file"></i>
+          <i class="fas ${fileIcon}"></i>
           <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
           <i class="fas fa-times" style="margin-left: auto; cursor: pointer;" onclick="clearFile()"></i>
         `;
         fileName.style.display = 'flex';
-        showToast('File selected successfully!');
+
+        // Preview file content and extract phone numbers
+        try {
+          const arrayBuffer = await file.arrayBuffer();
+          const result = extractPhoneNumbers(arrayBuffer, fileExtension);
+          
+          if (result.numbers.length > 0) {
+            let previewContent = '';
+            
+            if (fileExtension === '.xlsx' || fileExtension === '.xls') {
+              previewContent = `
+                <div class="preview-header">
+                  <i class="fas ${fileIcon}"></i>
+                  File Preview (${result.numbers.length} phone numbers found):
+                </div>
+                <div style="font-family: monospace; font-size: 0.8rem;">
+                  ${result.preview.slice(0, 3).join('<br>')}
+                  ${result.preview.length > 3 ? '<br>...' : ''}
+                </div>
+                <div style="margin-top: 8px; color: #10b981; font-weight: 500;">
+                  ✓ Found ${result.numbers.length} phone numbers: ${result.numbers.slice(0, 3).join(', ')}${result.numbers.length > 3 ? '...' : ''}
+                </div>
+              `;
+            }
+            
+            filePreview.innerHTML = previewContent;
+            filePreview.style.display = 'block';
+            showToast(`Successfully processed ${file.name} - Found ${result.numbers.length} phone numbers!`);
+          } else {
+            filePreview.innerHTML = `
+              <div class="preview-header">
+                <i class="fas fa-exclamation-triangle" style="color: #f59e0b;"></i>
+                No phone numbers found in this file
+              </div>
+              <div style="color: #666;">
+                Please ensure your file contains valid phone numbers in formats like:
+                <br>• +1234567890
+                <br>• (123) 456-7890
+                <br>• 123-456-7890
+              </div>
+            `;
+            filePreview.style.display = 'block';
+            showToast('No phone numbers found in the uploaded file', true);
+          }
+        } catch (error) {
+          console.error('File processing error:', error);
+          filePreview.innerHTML = `
+            <div class="preview-header">
+              <i class="fas fa-exclamation-circle" style="color: #ef4444;"></i>
+              Error processing file
+            </div>
+            <div style="color: #666;">
+              ${error.message || 'Unable to process this file format'}
+            </div>
+          `;
+          filePreview.style.display = 'block';
+          showToast(`Error processing file: ${error.message}`, true);
+        }
       }
     }
 
@@ -662,6 +847,7 @@
     function clearFile() {
       document.getElementById('fileUpload').value = '';
       document.getElementById('fileName').style.display = 'none';
+      document.getElementById('filePreview').style.display = 'none';
     }
 
     // Check API & Agent health
@@ -891,7 +1077,18 @@
         if (isManualMode) {
           formData.append('numbers_list_str', numsRaw);
         } else {
-          formData.append('file', fileInput.files[0]);
+          // For file uploads, we'll extract the phone numbers client-side and send them as a string
+          // This ensures Excel files are properly processed
+          const file = fileInput.files[0];
+          const arrayBuffer = await file.arrayBuffer();
+          const result = extractPhoneNumbers(arrayBuffer, getFileExtension(file.name));
+          
+          if (result.numbers.length === 0) {
+            throw new Error('No phone numbers found in the uploaded file');
+          }
+          
+          formData.append('numbers_list_str', result.numbers.join(', '));
+          showToast(`Processing ${result.numbers.length} phone numbers from ${file.name}...`);
         }
         
         formData.append('prompt', prompt);
@@ -935,8 +1132,18 @@
       }
     });
 
+    // Helper function to get file extension
+    function getFileExtension(filename) {
+      return filename.toLowerCase().substring(filename.lastIndexOf('.'));
+    }
+
     // On load
     document.addEventListener('DOMContentLoaded', () => {
+      // Check if SheetJS is loaded
+      if (typeof XLSX === 'undefined') {
+        showToast('Excel processing library not loaded. Excel files may not work properly.', true);
+      }
+
       // Inject sample & test buttons
       const firstGroup = document.querySelector('.card form .form-group:first-child');
       const wrapper = document.createElement('div');
@@ -1007,4 +1214,19 @@
     window.clearFile = clearFile;
   </script>
 </body>
-</html>
+</html><i class="fas fa-file-excel"></i>
+                  Excel Preview (${result.numbers.length} phone numbers found):
+                </div>
+                <div style="font-family: monospace; font-size: 0.8rem;">
+                  ${result.preview.map((row, i) => 
+                    `Row ${i + 1}: ${Array.isArray(row) ? row.join(' | ') : row}`
+                  ).join('<br>')}
+                  ${result.preview.length >= 5 ? '<br>...' : ''}
+                </div>
+                <div style="margin-top: 8px; color: #10b981; font-weight: 500;">
+                  ✓ Found ${result.numbers.length} phone numbers: ${result.numbers.slice(0, 3).join(', ')}${result.numbers.length > 3 ? '...' : ''}
+                </div>
+              `;
+            } else {
+              previewContent = `
+                <div class="preview-header">
