@@ -272,6 +272,74 @@
     .toast.show { transform: translateX(0); }
     .toast.error { border-left-color: #ef4444; }
 
+    .input-toggle {
+      display: flex;
+      background: rgba(255,255,255,0.8);
+      border-radius: 10px;
+      padding: 4px;
+      gap: 4px;
+    }
+
+    .toggle-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      padding: 10px 15px;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      color: #666;
+    }
+
+    .toggle-btn.active {
+      background: linear-gradient(135deg,#667eea,#764ba2);
+      color: white;
+      box-shadow: 0 2px 8px rgba(102,126,234,0.3);
+    }
+
+    .toggle-btn:hover:not(.active) {
+      background: rgba(102,126,234,0.1);
+      color: #667eea;
+    }
+
+    .file-upload-area {
+      border: 2px dashed #e1e5e9;
+      border-radius: 10px;
+      padding: 30px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(255,255,255,0.5);
+    }
+
+    .file-upload-area:hover {
+      border-color: #667eea;
+      background: rgba(102,126,234,0.05);
+    }
+
+    .file-upload-area.dragover {
+      border-color: #667eea;
+      background: rgba(102,126,234,0.1);
+    }
+
+    .file-upload-content p {
+      margin: 5px 0;
+    }
+
+    .file-name {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background: rgba(16,185,129,0.1);
+      border: 1px solid #10b981;
+      border-radius: 6px;
+      color: #10b981;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
     .endpoint-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -347,12 +415,43 @@
           <i class="fas fa-list-ol"></i>
           <h2>Phone Numbers & Prompt</h2>
         </div>
-        <form id="callerForm" novalidate>
-          <div class="form-group">
-            <label for="numbers">Phone Numbers</label>
-            <textarea id="numbers" name="numbers" required
-              placeholder="+1234567890, +0987654321"></textarea>
-            <div class="input-hint">Separate with commas</div>
+        
+        <!-- Input Method Toggle -->
+        <div class="input-toggle" style="margin-bottom: 20px;">
+          <button type="button" class="toggle-btn active" id="manualToggle">
+            <i class="fas fa-keyboard"></i> Manual Entry
+          </button>
+          <button type="button" class="toggle-btn" id="fileToggle">
+            <i class="fas fa-file-upload"></i> File Upload
+          </button>
+        </div>
+
+        <form id="callerForm" novalidate enctype="multipart/form-data">
+          <!-- Manual Entry Section -->
+          <div id="manualSection">
+            <div class="form-group">
+              <label for="numbers">Phone Numbers</label>
+              <textarea id="numbers" name="numbers"
+                placeholder="+1234567890, +0987654321"></textarea>
+              <div class="input-hint">Separate with commas</div>
+            </div>
+          </div>
+
+          <!-- File Upload Section -->
+          <div id="fileSection" style="display: none;">
+            <div class="form-group">
+              <label for="fileUpload">Upload File with Phone Numbers</label>
+              <div class="file-upload-area" id="fileUploadArea">
+                <input type="file" id="fileUpload" name="file" accept=".txt,.csv,.docx,.pdf" style="display: none;">
+                <div class="file-upload-content">
+                  <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: #667eea; margin-bottom: 10px;"></i>
+                  <p><strong>Click to upload</strong> or drag and drop</p>
+                  <p style="font-size: 0.85rem; color: #666;">Supports: TXT, CSV, DOCX, PDF</p>
+                </div>
+              </div>
+              <div id="fileName" class="file-name" style="display: none;"></div>
+              <div class="input-hint">Upload a file containing phone numbers</div>
+            </div>
           </div>
 
           <div class="form-group">
@@ -446,8 +545,110 @@
 
     // Fill sample data
     function addSampleData() {
+      // Switch to manual mode first
+      document.getElementById('manualToggle').click();
       document.getElementById('numbers').value = '+1234567890, +0987654321, +1122334455';
       document.getElementById('prompt').value = 'Hello! This is a demo call from AgentReach Systems. We\'d love your feedback on our service. Press 1 to continue.';
+    }
+
+    // Toggle between manual entry and file upload
+    function setupInputToggle() {
+      const manualToggle = document.getElementById('manualToggle');
+      const fileToggle = document.getElementById('fileToggle');
+      const manualSection = document.getElementById('manualSection');
+      const fileSection = document.getElementById('fileSection');
+
+      manualToggle.addEventListener('click', () => {
+        manualToggle.classList.add('active');
+        fileToggle.classList.remove('active');
+        manualSection.style.display = 'block';
+        fileSection.style.display = 'none';
+        
+        // Clear file input when switching to manual
+        const fileInput = document.getElementById('fileUpload');
+        fileInput.value = '';
+        document.getElementById('fileName').style.display = 'none';
+      });
+
+      fileToggle.addEventListener('click', () => {
+        fileToggle.classList.add('active');
+        manualToggle.classList.remove('active');
+        fileSection.style.display = 'block';
+        manualSection.style.display = 'none';
+        
+        // Clear manual input when switching to file
+        document.getElementById('numbers').value = '';
+      });
+    }
+
+    // Setup file upload functionality
+    function setupFileUpload() {
+      const fileUploadArea = document.getElementById('fileUploadArea');
+      const fileInput = document.getElementById('fileUpload');
+      const fileName = document.getElementById('fileName');
+
+      // Click to upload
+      fileUploadArea.addEventListener('click', () => {
+        fileInput.click();
+      });
+
+      // Drag and drop
+      fileUploadArea.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.add('dragover');
+      });
+
+      fileUploadArea.addEventListener('dragleave', () => {
+        fileUploadArea.classList.remove('dragover');
+      });
+
+      fileUploadArea.addEventListener('drop', (e) => {
+        e.preventDefault();
+        fileUploadArea.classList.remove('dragover');
+        const files = e.dataTransfer.files;
+        if (files.length > 0) {
+          fileInput.files = files;
+          handleFileSelect(files[0]);
+        }
+      });
+
+      // File input change
+      fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length > 0) {
+          handleFileSelect(e.target.files[0]);
+        }
+      });
+
+      function handleFileSelect(file) {
+        const allowedTypes = ['text/plain', 'text/csv', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 'application/pdf'];
+        const maxSize = 10 * 1024 * 1024; // 10MB
+
+        if (!allowedTypes.includes(file.type)) {
+          showToast('Please upload a valid file type (TXT, CSV, DOCX, PDF)', true);
+          fileInput.value = '';
+          return;
+        }
+
+        if (file.size > maxSize) {
+          showToast('File size must be less than 10MB', true);
+          fileInput.value = '';
+          return;
+        }
+
+        fileName.innerHTML = `
+          <i class="fas fa-file"></i>
+          <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
+          <i class="fas fa-times" style="margin-left: auto; cursor: pointer;" onclick="clearFile()"></i>
+        `;
+        fileName.style.display = 'flex';
+        showToast('File selected successfully!');
+      }
+    }
+
+    // Clear selected file
+    function clearFile() {
+      document.getElementById('fileUpload').value = '';
+      document.getElementById('fileName').style.display = 'none';
     }
 
     // Check API & Agent health
@@ -638,16 +839,27 @@
     document.getElementById('callerForm').addEventListener('submit', async e => {
       e.preventDefault();
       
+      const manualSection = document.getElementById('manualSection');
+      const fileSection = document.getElementById('fileSection');
+      const isManualMode = manualSection.style.display !== 'none';
+      
       const numsRaw = document.getElementById('numbers').value.trim();
+      const fileInput = document.getElementById('fileUpload');
       const prompt = document.getElementById('prompt').value.trim();
       
-      if (!numsRaw) {
-        return showToast('Please enter at least one phone number', true);
-      }
-      
-      const numbers = numsRaw.split(',').map(n => n.trim()).filter(n => n);
-      if (numbers.length === 0) {
-        return showToast('Please enter valid phone numbers', true);
+      // Validation
+      if (isManualMode) {
+        if (!numsRaw) {
+          return showToast('Please enter at least one phone number', true);
+        }
+        const numbers = numsRaw.split(',').map(n => n.trim()).filter(n => n);
+        if (numbers.length === 0) {
+          return showToast('Please enter valid phone numbers', true);
+        }
+      } else {
+        if (!fileInput.files.length) {
+          return showToast('Please select a file to upload', true);
+        }
       }
 
       const submitBtn = document.getElementById('submitBtn');
@@ -660,16 +872,20 @@
       document.getElementById('noResults').style.display = 'none';
 
       try {
-        const body = new URLSearchParams();
-        body.append('numbers_list_str', numsRaw);
-        body.append('prompt', prompt);
+        const formData = new FormData();
+        
+        // Add data based on input method
+        if (isManualMode) {
+          formData.append('numbers_list_str', numsRaw);
+        } else {
+          formData.append('file', fileInput.files[0]);
+        }
+        
+        formData.append('prompt', prompt);
 
         const res = await fetch(`${API_BASE_URL}/outbound_caller`, {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-          body
+          body: formData
         });
 
         if (!res.ok) {
@@ -679,13 +895,17 @@
 
         const data = await res.json();
         displayResults(data);
-        showToast(`Successfully initiated calls to ${data.length} numbers!`);
+        
+        const inputMethod = isManualMode ? 'manual entry' : 'file upload';
+        showToast(`Successfully initiated calls to ${data.length} numbers via ${inputMethod}!`);
 
       } catch (err) {
         console.error(err);
         let msg = 'Failed to initiate calls.';
         if (err.message.includes('422')) {
           msg += ' Invalid request format.';
+        } else if (err.message.includes('400')) {
+          msg += ' No valid phone numbers found in file.';
         } else if (err.message.includes('CORS')) {
           msg += ' CORS error.';
         } else if (err.message.match(/NetworkError|Failed to fetch/)) {
@@ -761,10 +981,17 @@
       document.getElementById('callHistoryBtn').onclick = testCallHistory;
       document.getElementById('callStatsBtn').onclick = testCallStats;
 
+      // Setup input toggle and file upload
+      setupInputToggle();
+      setupFileUpload();
+
       // Initial status check
       checkSystemStatus();
       setInterval(checkSystemStatus, 30000);
     });
+
+    // Expose clearFile function globally
+    window.clearFile = clearFile;
   </script>
 </body>
 </html>
