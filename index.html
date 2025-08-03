@@ -327,6 +327,24 @@
       margin: 5px 0;
     }
 
+    .file-formats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .format-badge {
+      background: rgba(102,126,234,0.1);
+      color: #667eea;
+      padding: 4px 8px;
+      border-radius: 12px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      text-align: center;
+      border: 1px solid rgba(102,126,234,0.2);
+    }
+
     .file-name {
       margin-top: 10px;
       padding: 8px 12px;
@@ -338,6 +356,18 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 8px;
+      padding: 8px 12px;
+      background: rgba(102,126,234,0.1);
+      border-radius: 6px;
+      font-size: 0.85rem;
+      color: #667eea;
     }
 
     .endpoint-grid {
@@ -393,6 +423,7 @@
       .main-content { grid-template-columns: 1fr; gap: 20px; }
       h1 { font-size: 2rem; }
       .status-grid { grid-template-columns: repeat(auto-fit,minmax(140px,1fr)); }
+      .file-formats { grid-template-columns: repeat(3, 1fr); }
     }
   </style>
 </head>
@@ -442,15 +473,23 @@
             <div class="form-group">
               <label for="fileUpload">Upload File with Phone Numbers</label>
               <div class="file-upload-area" id="fileUploadArea">
-                <input type="file" id="fileUpload" name="file" accept=".txt,.csv,.docx,.pdf" style="display: none;">
+                <input type="file" id="fileUpload" name="file" accept=".txt,.csv,.docx,.pdf,.xlsx,.xls" style="display: none;">
                 <div class="file-upload-content">
                   <i class="fas fa-cloud-upload-alt" style="font-size: 2rem; color: #667eea; margin-bottom: 10px;"></i>
                   <p><strong>Click to upload</strong> or drag and drop</p>
-                  <p style="font-size: 0.85rem; color: #666;">Supports: TXT, CSV, DOCX, PDF</p>
+                  <p style="font-size: 0.85rem; color: #666;">Supported file formats:</p>
+                  <div class="file-formats">
+                    <div class="format-badge">TXT</div>
+                    <div class="format-badge">CSV</div>
+                    <div class="format-badge">XLSX</div>
+                    <div class="format-badge">XLS</div>
+                    <div class="format-badge">DOCX</div>
+                    <div class="format-badge">PDF</div>
+                  </div>
                 </div>
               </div>
               <div id="fileName" class="file-name" style="display: none;"></div>
-              <div class="input-hint">Upload a file containing phone numbers (TXT, CSV, DOCX, PDF, XLSX, XLS)</div>
+              <div class="input-hint">Upload a file containing phone numbers. Excel files should have phone numbers in the first column or in a column named "phone", "number", or "mobile".</div>
             </div>
           </div>
 
@@ -543,6 +582,34 @@
       }, 4000);
     }
 
+    // Get file type icon based on extension
+    function getFileIcon(filename) {
+      const ext = filename.toLowerCase().split('.').pop();
+      const iconMap = {
+        'txt': 'fa-file-alt',
+        'csv': 'fa-file-csv',
+        'xlsx': 'fa-file-excel',
+        'xls': 'fa-file-excel',
+        'docx': 'fa-file-word',
+        'pdf': 'fa-file-pdf'
+      };
+      return iconMap[ext] || 'fa-file';
+    }
+
+    // Get file type color based on extension
+    function getFileColor(filename) {
+      const ext = filename.toLowerCase().split('.').pop();
+      const colorMap = {
+        'txt': '#6c757d',
+        'csv': '#28a745',
+        'xlsx': '#217346',
+        'xls': '#217346',
+        'docx': '#2b579a',
+        'pdf': '#dc3545'
+      };
+      return colorMap[ext] || '#667eea';
+    }
+
     // Fill sample data
     function addSampleData() {
       // Switch to manual mode first
@@ -620,41 +687,70 @@
       });
 
       function handleFileSelect(file) {
+        // Enhanced file type validation
         const allowedTypes = [
           'text/plain',                                                                    // .txt
           'text/csv',                                                                      // .csv
           'application/csv',                                                               // .csv (alternative)
+          'application/vnd.ms-excel',                                                      // .xls (older format)
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',           // .xlsx (newer format)
           'application/vnd.openxmlformats-officedocument.wordprocessingml.document',      // .docx
           'application/pdf',                                                               // .pdf
-          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',           // .xlsx
-          'application/vnd.ms-excel'                                                       // .xls
+          'application/octet-stream'                                                       // Fallback for some file types
         ];
-        const maxSize = 10 * 1024 * 1024; // 10MB
         
         // Check file extension as well since MIME types can be inconsistent
-        const fileName = file.name.toLowerCase();
-        const allowedExtensions = ['.txt', '.csv', '.docx', '.pdf', '.xlsx', '.xls'];
-        const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+        const fileNameLower = file.name.toLowerCase();
+        const allowedExtensions = ['.txt', '.csv', '.xlsx', '.xls', '.docx', '.pdf'];
+        const hasValidExtension = allowedExtensions.some(ext => fileNameLower.endsWith(ext));
+        const hasValidMimeType = allowedTypes.includes(file.type);
 
-        if (!allowedTypes.includes(file.type) && !hasValidExtension) {
-          showToast('Please upload a valid file type (TXT, CSV, DOCX, PDF, XLSX, XLS)', true);
+        // Special handling for Excel files which sometimes have generic MIME types
+        const isExcelFile = fileNameLower.endsWith('.xlsx') || fileNameLower.endsWith('.xls');
+        
+        if (!hasValidMimeType && !hasValidExtension && !isExcelFile) {
+          showToast('Please upload a valid file type (TXT, CSV, XLSX, XLS, DOCX, PDF)', true);
           fileInput.value = '';
           return;
         }
 
+        const maxSize = 10 * 1024 * 1024; // 10MB
         if (file.size > maxSize) {
           showToast('File size must be less than 10MB', true);
           fileInput.value = '';
           return;
         }
 
+        // Get file extension for display
+        const extension = fileNameLower.split('.').pop().toUpperCase();
+        const fileIcon = getFileIcon(file.name);
+        const fileColor = getFileColor(file.name);
+
         fileName.innerHTML = `
-          <i class="fas fa-file"></i>
-          <span>${file.name} (${(file.size / 1024).toFixed(1)} KB)</span>
-          <i class="fas fa-times" style="margin-left: auto; cursor: pointer;" onclick="clearFile()"></i>
+          <i class="fas ${fileIcon}" style="color: ${fileColor};"></i>
+          <div style="flex: 1;">
+            <div style="font-weight: 600;">${file.name}</div>
+            <div style="font-size: 0.8rem; opacity: 0.8;">${(file.size / 1024).toFixed(1)} KB • ${extension} Format</div>
+          </div>
+          <i class="fas fa-times" style="cursor: pointer; opacity: 0.7; hover: opacity: 1;" onclick="clearFile()"></i>
         `;
         fileName.style.display = 'flex';
-        showToast('File selected successfully!');
+        fileName.style.borderColor = fileColor;
+        fileName.style.backgroundColor = `${fileColor}15`;
+        fileName.style.color = fileColor;
+
+        // Show additional info for Excel files
+        if (isExcelFile) {
+          const fileInfo = document.createElement('div');
+          fileInfo.className = 'file-info';
+          fileInfo.innerHTML = `
+            <i class="fas fa-info-circle"></i>
+            <span>Excel file detected. Phone numbers should be in the first column or in a column named "phone", "number", or "mobile".</span>
+          `;
+          fileName.parentNode.insertBefore(fileInfo, fileName.nextSibling);
+        }
+
+        showToast(`${extension} file selected successfully!`);
       }
     }
 
@@ -662,6 +758,10 @@
     function clearFile() {
       document.getElementById('fileUpload').value = '';
       document.getElementById('fileName').style.display = 'none';
+      
+      // Remove any file info elements
+      const fileInfos = document.querySelectorAll('.file-info');
+      fileInfos.forEach(info => info.remove());
     }
 
     // Check API & Agent health
@@ -718,19 +818,7 @@
           const data = await res.json();
           btn.className = 'endpoint-btn active';
           status.textContent = `${data.length || 0} calls found`;
-          showToast('Call history loaded successfully!');
-          
-          // Display call history if available
-          if (data.length > 0) {
-            displayCallHistory(data);
-          }
-        } else {
-          throw new Error(`HTTP ${res.status}`);
-        }
-      } catch (e) {
-        btn.className = 'endpoint-btn error';
-        status.textContent = 'Unavailable';
-        showToast('Call history endpoint not available', true);
+          showToast('Call history endpoint not available', true);
       }
     }
 
@@ -848,6 +936,24 @@
       document.getElementById('noResults').style.display = 'none';
     }
 
+    // Enhanced file validation and processing
+    function validateFile(file) {
+      const allowedExtensions = ['.txt', '.csv', '.xlsx', '.xls', '.docx', '.pdf'];
+      const fileName = file.name.toLowerCase();
+      const hasValidExtension = allowedExtensions.some(ext => fileName.endsWith(ext));
+      
+      if (!hasValidExtension) {
+        throw new Error('Invalid file type. Please upload TXT, CSV, XLSX, XLS, DOCX, or PDF files.');
+      }
+      
+      const maxSize = 10 * 1024 * 1024; // 10MB
+      if (file.size > maxSize) {
+        throw new Error('File size must be less than 10MB');
+      }
+      
+      return true;
+    }
+
     // Form submission handler
     document.getElementById('callerForm').addEventListener('submit', async e => {
       e.preventDefault();
@@ -873,6 +979,12 @@
         if (!fileInput.files.length) {
           return showToast('Please select a file to upload', true);
         }
+        
+        try {
+          validateFile(fileInput.files[0]);
+        } catch (error) {
+          return showToast(error.message, true);
+        }
       }
 
       const submitBtn = document.getElementById('submitBtn');
@@ -892,6 +1004,20 @@
           formData.append('numbers_list_str', numsRaw);
         } else {
           formData.append('file', fileInput.files[0]);
+          
+          // Add file type information for better server-side processing
+          const fileName = fileInput.files[0].name.toLowerCase();
+          if (fileName.endsWith('.xlsx') || fileName.endsWith('.xls')) {
+            formData.append('file_type', 'excel');
+          } else if (fileName.endsWith('.csv')) {
+            formData.append('file_type', 'csv');
+          } else if (fileName.endsWith('.txt')) {
+            formData.append('file_type', 'txt');
+          } else if (fileName.endsWith('.docx')) {
+            formData.append('file_type', 'docx');
+          } else if (fileName.endsWith('.pdf')) {
+            formData.append('file_type', 'pdf');
+          }
         }
         
         formData.append('prompt', prompt);
@@ -910,7 +1036,16 @@
         displayResults(data);
         
         const inputMethod = isManualMode ? 'manual entry' : 'file upload';
-        showToast(`Successfully initiated calls to ${data.length} numbers via ${inputMethod}!`);
+        const fileType = isManualMode ? '' : ` (${fileInput.files[0].name.split('.').pop().toUpperCase()})`;
+        showToast(`Successfully initiated calls to ${data.length} numbers via ${inputMethod}${fileType}!`);
+
+        // Clear form after successful submission
+        if (isManualMode) {
+          document.getElementById('numbers').value = '';
+        } else {
+          clearFile();
+        }
+        document.getElementById('prompt').value = '';
 
       } catch (err) {
         console.error(err);
@@ -919,6 +1054,10 @@
           msg += ' Invalid request format.';
         } else if (err.message.includes('400')) {
           msg += ' No valid phone numbers found in file.';
+        } else if (err.message.includes('415')) {
+          msg += ' Unsupported file type.';
+        } else if (err.message.includes('413')) {
+          msg += ' File too large.';
         } else if (err.message.includes('CORS')) {
           msg += ' CORS error.';
         } else if (err.message.match(/NetworkError|Failed to fetch/)) {
@@ -954,7 +1093,14 @@
         border-radius: 8px;
         cursor: pointer;
         margin-right: 8px;
+        transition: all 0.3s ease;
       `;
+      sampleBtn.onmouseover = () => {
+        sampleBtn.style.background = 'rgba(102,126,234,0.1)';
+      };
+      sampleBtn.onmouseout = () => {
+        sampleBtn.style.background = 'transparent';
+      };
 
       const testBtn = document.createElement('button');
       testBtn.type = 'button';
@@ -985,7 +1131,14 @@
         padding: 8px 16px;
         border-radius: 8px;
         cursor: pointer;
+        transition: all 0.3s ease;
       `;
+      testBtn.onmouseover = () => {
+        testBtn.style.background = 'rgba(16,185,129,0.1)';
+      };
+      testBtn.onmouseout = () => {
+        testBtn.style.background = 'transparent';
+      };
 
       wrapper.append(sampleBtn, testBtn);
       firstGroup.appendChild(wrapper);
@@ -1007,4 +1160,16 @@
     window.clearFile = clearFile;
   </script>
 </body>
-</html>
+</html> loaded successfully!');
+          
+          // Display call history if available
+          if (data.length > 0) {
+            displayCallHistory(data);
+          }
+        } else {
+          throw new Error(`HTTP ${res.status}`);
+        }
+      } catch (e) {
+        btn.className = 'endpoint-btn error';
+        status.textContent = 'Unavailable';
+        showToast('Call history
